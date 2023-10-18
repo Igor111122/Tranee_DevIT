@@ -79,52 +79,22 @@ function bruteRecursive(current_Length = 1, endLength = 15, indexes = createMask
 
 // Class for a queue with a maximum limit.
 class Queue {
-    constructor(maxRunningThreads) {
-        this.maxRunningThreads = maxRunningThreads;
-        this.tasks = [];
-        this.status = "stopped";
-        this.runningThreads = 0;
+    constructor(max_queue) {
+        this.max_queue = max_queue;
+        this.funcQueue = [];
     }
+    
+    // Add a function to the queue. and call it as Promise
+    add(func) {
+        const funPromise = new Promise((resolve, reject) => {
+            resolve();
+        });
 
-    async run() {
-        if (this.status === "stopped") {
-            this.status = "running";
-            await this.loop();
-        }
-    }
+        this.funcQueue.push(func);
 
-    stop() {
-        this.status = "stopped";
-    }
-
-    pause() {
-        this.status = "paused";
-    }
-
-    async add(task) {
-        this.tasks.push(task);
-        if (this.status === "running") {
-            await this.loop();
-        }
-    }
-
-    async loop() {
-        while (this.status === "running" && this.tasks.length > 0 && this.runningThreads < this.maxRunningThreads) {
-            const task = this.tasks.shift();
-            this.runningThreads++;
-
-            try {
-                if (typeof task === "function") {
-                    await task();
-                } else if (task instanceof Promise) {
-                    await task;
-                } else if (typeof task === "object" && typeof task.then === "function") {
-                    await task;
-                }
-            } catch (error) {
-                console.error("Task execution error:", error);
-            } finally {
-                this.runningThreads--;
+        if (this.funcQueue.length > this.max_queue) {
+            while (this.funcQueue.length > 0) {
+                funPromise.then(console.log(this.funcQueue.shift()()));
             }
         }
     }
@@ -132,7 +102,6 @@ class Queue {
 
 let myQueue = new Queue(2);
 //sending function to the metod
-myQueue.run();
 myQueue.add(bruteRecursive);
 myQueue.add(bruteRecursive);
 myQueue.add(bruteRecursive);

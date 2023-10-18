@@ -1,86 +1,74 @@
 // Define an array of allowed characters for the password.
 const allowedChars = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"];
 // Calculate the length of the allowed characters array.
-const allowedChars_length = allowedChars.length;
+const allowedCharslength = allowedChars.length;
 
 // Function to create a mask of zeros with a specified length.
 function createMask(length = 1) {
-    let mask = [];
-    for (let i = 0; i < length; i++) {
-        mask.push(0);
-    }
-    return mask;
+    return new Array(length).fill(0);
 }
 
-// Function to generate a password using an index array.
-function generatePassword(indexes, allowedChars_length) {
+// Function to generate a password using an index array. [9,0] -> [0,1]
+function generatePassword(indexes) {
     indexes[0]++;
-    return recursiveIncrement(indexes, allowedChars_length, 0);
+    return recursiveIncrement(indexes, 0);// We need second function because we need to increment indexes only 1 time
 }
 
-function recursiveIncrement(indexes, allowedChars_length, currentIndex) {
-    
-    if (indexes[currentIndex] === allowedChars_length) {
-        if (currentIndex+1 >= indexes.length) {
+// Recursively increment the indexes and generate the password. 
+function recursiveIncrement(indexes, currentIndex) {
+    if (indexes[currentIndex] === allowedCharslength) {
+        if (currentIndex + 1 >= indexes.length) {
             return false; // Return false if all combinations have been exhausted.
         }
         indexes[currentIndex] = 0;
         indexes[currentIndex + 1]++;
-        return recursiveIncrement(indexes, allowedChars_length, currentIndex + 1);
+        return recursiveIncrement(indexes, currentIndex + 1);//Call recursive function with next argument
     }
 
     return indexes; // Return the updated index array.
 }
 
 // Function to generate a string from an index array using the allowed characters array.
-function generateStringFromIndex(IndexArray, allowedCharsArray) {
-    let result = '';
-    for (let i = 0; i < IndexArray.length; i++) {
-        const index = IndexArray[i];
-        if (index >= 0 && index < allowedChars_length) {
-            result += allowedCharsArray[index];
-        }
-    }
+function generateStringfromIndex(indexArray) {
+    const result = indexArray
+        .map(index => {
+            if (index >= 0 && index < allowedCharslength) {
+                return allowedChars[index];
+            } else {
+                return ''; // Handle out-of-bounds indices with an empty string.
+            }
+        })
+        .join(''); // Join the characters to form the result string.
+
     return result; // Return the generated string.
 }
 
+
 // Function to check if a provided password matches a predefined value.
 function login(password) {
-    if (password === "PPPPPP") {
+    if (password === "qrQOT") {
         return true; // Return true if the password matches the predefined value.
-    }
-    return false; // Return false otherwise.
-}
-
-// Function to check if the current length is less than or equal to the specified end length.
-function canIncrementIndexes(current_Length, endLength) {
-    if (current_Length <= endLength) {
-        return true; // Return true if the current length is less than or equal to the end length.
     }
     return false; // Return false otherwise.
 }
 
 // Brute force function to find the password within the specified length.
 function brute(endLength = 15) {
-    let current_Length = 1;
-    let indexes = createMask(current_Length);
 
-    while (canIncrementIndexes(current_Length, endLength)) {
-        while (true) {
-            const passwordTry = generateStringFromIndex(indexes, allowedChars);
+    for(let currentLength = 1; currentLength <= endLength; currentLength++) {
+
+        let indexes = createMask(currentLength);
+
+        while (indexes != false) {
+            const passwordTry = generateStringfromIndex(indexes);//Generate string based on value of indexes
 
             if (login(passwordTry)) {
                 return passwordTry; // Return the password if a match is found.
             }
 
-            indexes = generatePassword(indexes, allowedChars_length);
-
-            if (indexes == false) {
-                current_Length++;
-                break; // Increase the length and break inner loop if all combinations exhausted.
-            }
+            indexes = generatePassword(indexes);//Generate next indexes
         }
-        indexes = createMask(current_Length);
+        
     }
     return "Unable to find"; // Return this message if the password is not found within the specified length.
 
