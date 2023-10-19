@@ -2,19 +2,18 @@ class Queue {
     constructor(maxRunningThreads) {
         this.maxRunningThreads = maxRunningThreads;
         this.tasks = [];
-        this.status = "stopped";
+        this.status = "stopped"; // Установим начальное состояние "stopped"
         this.runningThreads = 0;
     }
-
-    async run() {
-        if (this.status === "stopped") {
-            this.status = "running";
-            await this.loop();
-        }
+    
+    run() {
+        this.status = "running";
+        this.loop();
     }
 
     stop() {
         this.status = "stopped";
+        this.tasks = [];
     }
 
     pause() {
@@ -23,54 +22,48 @@ class Queue {
 
     async add(task) {
         this.tasks.push(task);
-        if (this.status === "running") {
-            await this.loop();
-        }
+        await this.loop(); // Дождитесь выполнения цикла перед добавлением следующей задачи
     }
 
     async loop() {
-        while (this.status === "running" && this.tasks.length > 0 && this.runningThreads < this.maxRunningThreads) {
+        if (this.status === "running" && this.runningThreads < this.maxRunningThreads) {
             const task = this.tasks.shift();
-            this.runningThreads++;
-
-            try {
-                if (typeof task === "function") {
+            if (task) {
+                this.runningThreads++;
+                try {
                     await task();
-                } else if (task instanceof Promise) {
-                    await task;
-                } else if (typeof task === "object" && typeof task.then === "function") {
-                    await task;
+                } catch (error) {
+                    console.error(error);
+                } finally {
+                    this.runningThreads--;
+                    await this.loop(); // Запускаем следующую задачу
                 }
-            } catch (error) {
-                console.error("Task execution error:", error);
-            } finally {
-                this.runningThreads--;
             }
         }
     }
 }
 
 // Пример использования
-const myQueue = new Queue(2);
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function asyncTask1() {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log("Async Task 1 completed.");
-}
-
-function syncTask2() {
-    console.log("Sync Task 2 completed.");
-}
-
-const promiseTask3 = new Promise(resolve => {
-    setTimeout(() => {
-        console.log("Promise Task 3 completed.");
-        resolve();
-    }, 1500);
-});
+let myQueue = new Queue(3);
 
 myQueue.run();
 
-myQueue.add(asyncTask1);
-myQueue.add(syncTask2);
-myQueue.add(promiseTask3);
+myQueue.add(async () => {
+    console.log("Task 1 started");
+    await delay(1000);
+    console.log("Task 1 completed");
+});
+
+myQueue.add(async () => {
+    console.log("Task 2 started");
+    await delay(100);
+    console.log("Task 2 completed");
+});
+
+myQueue.add(async () => {
+    console.log("Task 3 started");
+    await delay(200);
+    console.log("Task 3 completed");
+});
