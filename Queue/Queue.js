@@ -25,6 +25,10 @@ class Queue {
         await this.loop(); // Wait for the current loop to complete before adding more tasks
     }
 
+    onFinish(){
+        console.log("Все задачи выполнены");
+    }
+
     async loop() {
         if (this.status === "running" && this.runningThreads < this.maxRunningThreads) {
             const task = this.tasks.shift(); // Get the next task from the queue
@@ -36,6 +40,9 @@ class Queue {
                     console.error(error); // Log any errors that occur during task execution
                 } finally {
                     this.runningThreads--; // Decrement the count of running tasks
+                    if(this.runningThreads == 0){
+                        this.onFinish();// Call function after all tasks have finished
+                    }
                     await this.loop(); // Start the next task in the queue
                 }
             }
