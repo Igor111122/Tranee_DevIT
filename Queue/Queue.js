@@ -13,24 +13,18 @@ class Queue {
 
     stop() {
         this.status = "stopped";
+        this.tasks = [];
     }
 
     pause() {
         this.status = "paused";
     }
 
-    async add(task, onresolve, onreject, priority, numTask = 0) {
-        // Create an object that includes the task function, onresolve, and onreject
-        const taskObject = { task, onresolve, onreject };
-        
-        if (Math.random() < priority ? 0 : 1) {
-            this.tasks.unshift(taskObject); // Add the task to the front of the queue
-            priority = 1;
-        } else {
-            this.tasks.push(taskObject); // Add the task to the end of the queue
-            priority = 0;
-        }
-        console.log(`Task №${numTask} has priority ${priority}`);
+    async add(task, onresolve, onreject, numTask = 0) {
+        // Create an object that includes the task function, onresolve, onreject, and a randomly generated priority
+        const taskObject = { task, onresolve, onreject, priority: Math.floor(Math.random() * 101) };
+        this.tasks.push(taskObject);
+        console.log(`Task №${numTask} has priority ${taskObject.priority}`);
 
         await this.loop();
     }
@@ -41,23 +35,29 @@ class Queue {
 
     async loop() {
         if (this.status === "running" && this.runningThreads < this.maxRunningThreads) {
-            const taskObject = this.tasks.shift(); // Get the next task object from the queue
-            if (taskObject) {
+            // Find the first task that meets the condition based on priority and a random number
+            let taskIndex = this.tasks.findIndex(taskObj => Math.random() * 100 < taskObj.priority);
+            if(taskIndex === -1 ){ taskIndex = this.tasks.findIndex(taskObj => Math.random() * 100 > taskObj.priority);}
+
+            if (taskIndex !== -1) {
                 this.runningThreads++;
+                const taskObject = this.tasks[taskIndex];
                 const { task, onresolve, onreject } = taskObject;
 
                 try {
-                    await task(); // Execute the task (it's assumed to be an asynchronous function)
+                    await task();
                     if (onresolve) {
-                        onresolve(); // Call onresolve callback on task success
+                        onresolve();
                     }
                 } catch (error) {
                     console.error(error);
                     if (onreject) {
-                        onreject(error); // Call onreject callback on task failure
+                        onreject(error);
                     }
                 } finally {
                     this.runningThreads--;
+                    this.tasks.splice(taskIndex, 1);
+
                     if (this.runningThreads === 0 && this.tasks.length === 0) {
                         this.onFinish();
                     }
@@ -85,10 +85,8 @@ myQueue.add(
     (error) => {
         console.error("Task 1 rejected: " + error);
     },
-    Math.random(),
     1
 );
-
 
 myQueue.add(
     async () => {
@@ -102,7 +100,6 @@ myQueue.add(
     (error) => {
         console.error("Task 2 rejected: " + error);
     },
-    Math.random(),
     2
 );
 
@@ -118,9 +115,7 @@ myQueue.add(
     (error) => {
         console.error("Task 3 rejected: " + error);
     },
-    Math.random(),
     3
 );
-// Add more tasks with onresolve and onreject as needed
 
 myQueue.run();
