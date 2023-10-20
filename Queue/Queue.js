@@ -1,49 +1,67 @@
 class Queue {
     constructor(maxRunningThreads) {
-        this.maxRunningThreads = maxRunningThreads; // Maximum number of tasks that can run simultaneously
-        this.tasks = []; // Queue for storing tasks
-        this.status = "stopped"; // Set the initial state to "stopped"
-        this.runningThreads = 0; // Number of currently running tasks
+        this.maxRunningThreads = maxRunningThreads;
+        this.tasks = [];
+        this.status = "stopped";
+        this.runningThreads = 0;
     }
-    
+
     run() {
-        this.status = "running"; // Change the state to "running"
-        this.loop(); // Start processing tasks
+        this.status = "running";
+        this.loop();
     }
 
     stop() {
-        this.status = "stopped"; // Change the state to "stopped"
-        this.tasks = []; // Clear the task queue
+        this.status = "stopped";
     }
 
     pause() {
-        this.status = "paused"; // Change the state to "paused"
+        this.status = "paused";
     }
 
-    async add(task) {
-        this.tasks.push(task); // Add a new task to the queue
-        await this.loop(); // Wait for the current loop to complete before adding more tasks
+    async add(task, onresolve, onreject, priority, numTask = 0) {
+        // Create an object that includes the task function, onresolve, and onreject
+        const taskObject = { task, onresolve, onreject };
+        
+        if (Math.random() < priority ? 0 : 1) {
+            this.tasks.unshift(taskObject); // Add the task to the front of the queue
+            priority = 1;
+        } else {
+            this.tasks.push(taskObject); // Add the task to the end of the queue
+            priority = 0;
+        }
+        console.log(`Task №${numTask} has priority ${priority}`);
+
+        await this.loop();
     }
 
-    onFinish(){
-        console.log("Все задачи выполнены");
+    onFinish() {
+        console.log("All tasks are completed");
     }
 
     async loop() {
         if (this.status === "running" && this.runningThreads < this.maxRunningThreads) {
-            const task = this.tasks.shift(); // Get the next task from the queue
-            if (task) {
-                this.runningThreads++; // Increment the count of running tasks
+            const taskObject = this.tasks.shift(); // Get the next task object from the queue
+            if (taskObject) {
+                this.runningThreads++;
+                const { task, onresolve, onreject } = taskObject;
+
                 try {
                     await task(); // Execute the task (it's assumed to be an asynchronous function)
-                } catch (error) {
-                    console.error(error); // Log any errors that occur during task execution
-                } finally {
-                    this.runningThreads--; // Decrement the count of running tasks
-                    if(this.runningThreads == 0){
-                        this.onFinish();// Call function after all tasks have finished
+                    if (onresolve) {
+                        onresolve(); // Call onresolve callback on task success
                     }
-                    await this.loop(); // Start the next task in the queue
+                } catch (error) {
+                    console.error(error);
+                    if (onreject) {
+                        onreject(error); // Call onreject callback on task failure
+                    }
+                } finally {
+                    this.runningThreads--;
+                    if (this.runningThreads === 0 && this.tasks.length === 0) {
+                        this.onFinish();
+                    }
+                    await this.loop();
                 }
             }
         }
@@ -53,24 +71,56 @@ class Queue {
 // Example usage
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-let myQueue = new Queue(3); // Create a Queue instance with a maximum of 3 concurrent tasks
+let myQueue = new Queue(2);
 
-myQueue.run(); // Start processing tasks
+myQueue.add(
+    async () => {
+        console.log("Task 1 started");
+        await delay(1000);
+        console.log("Task 1 completed");
+    },
+    () => {
+        console.log("Task 1 resolved");
+    },
+    (error) => {
+        console.error("Task 1 rejected: " + error);
+    },
+    Math.random(),
+    1
+);
 
-myQueue.add(async () => {
-    console.log("Task 1 started");
-    await delay(1000); // Simulate a delay of 1000ms
-    console.log("Task 1 completed");
-});
 
-myQueue.add(async () => {
-    console.log("Task 2 started");
-    await delay(100); // Simulate a delay of 100ms
-    console.log("Task 2 completed");
-});
+myQueue.add(
+    async () => {
+        console.log("Task 2 started");
+        await delay(100);
+        console.log("Task 2 completed");
+    },
+    () => {
+        console.log("Task 2 resolved");
+    },
+    (error) => {
+        console.error("Task 2 rejected: " + error);
+    },
+    Math.random(),
+    2
+);
 
-myQueue.add(async () => {
-    console.log("Task 3 started");
-    await delay(200); // Simulate a delay of 200ms
-    console.log("Task 3 completed");
-});
+myQueue.add(
+    async () => {
+        console.log("Task 3 started");
+        await delay(200);
+        console.log("Task 3 completed");
+    },
+    () => {
+        console.log("Task 3 resolved");
+    },
+    (error) => {
+        console.error("Task 3 rejected: " + error);
+    },
+    Math.random(),
+    3
+);
+// Add more tasks with onresolve and onreject as needed
+
+myQueue.run();
