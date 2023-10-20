@@ -20,9 +20,9 @@ class Queue {
         this.status = "paused";
     }
 
-    async add(task, onresolve, onreject, numTask = 0) {
+    async add(task, onresolve, onreject, priority, numTask = 0) {
         // Create an object that includes the task function, onresolve, onreject, and a randomly generated priority
-        const taskObject = { task, onresolve, onreject, priority: Math.floor(Math.random() * 101) };
+        const taskObject = { task, onresolve, onreject, priority};
         this.tasks.push(taskObject);
         console.log(`Task №${numTask} has priority ${taskObject.priority}`);
 
@@ -47,7 +47,7 @@ class Queue {
                 try {
                     await task();
                     if (onresolve) {
-                        onresolve();
+                        onresolve(()=>{console.log("Run callback")});
                     }
                 } catch (error) {
                     console.error(error);
@@ -79,13 +79,13 @@ myQueue.add(
         await delay(1000);
         console.log("Task 1 completed");
     },
-    () => {
-        console.log("Task 1 resolved");
+    (fn) => {
+        fn();
     },
     (error) => {
         console.error("Task 1 rejected: " + error);
     },
-    1
+    Math.floor(Math.random() * 101),1
 );
 
 myQueue.add(
@@ -100,7 +100,7 @@ myQueue.add(
     (error) => {
         console.error("Task 2 rejected: " + error);
     },
-    2
+    Math.floor(Math.random() * 101),2
 );
 
 myQueue.add(
@@ -115,7 +115,7 @@ myQueue.add(
     (error) => {
         console.error("Task 3 rejected: " + error);
     },
-    3
+    Math.floor(Math.random() * 101),3
 );
 
 myQueue.run();
