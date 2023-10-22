@@ -1,42 +1,84 @@
+// Define an array of allowed characters for the password.
+const allowedChars = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"];
+// Calculate the length of the allowed characters array.
+const allowedCharslength = allowedChars.length;
+const password = "qU";
+const passwordArray = password.split("");
+
+
+// Define a class called Queue to manage asynchronous tasks with a limited number of running threads.
 class Queue {
     constructor(maxRunningThreads) {
-        this.maxRunningThreads = maxRunningThreads; // Maximum number of tasks that can run simultaneously
-        this.tasks = []; // Queue for storing tasks
-        this.status = "stopped"; // Set the initial state to "stopped"
-        this.runningThreads = 0; // Number of currently running tasks
+        this.maxRunningThreads = maxRunningThreads; // Maximum number of concurrently running threads.
+        this.tasks = []; // An array to store tasks.
+        this.status = "stopped"; // The status of the queue.
+        this.runningThreads = 0; // Number of currently running threads.
     }
 
+    // Method to start the queue and begin processing tasks.
     run() {
-        this.status = "running"; // Change the state to "running"
-        this.loop(); // Start processing tasks
+        this.status = "running"; // Set the status to "running".
+        this.loop(); // Start the task processing loop.
     }
 
+    // Method to stop the queue and clear all tasks.
     stop() {
-        this.status = "stopped"; // Change the state to "stopped"
-        this.tasks = []; // Clear the task queue
+        this.status = "stopped"; // Set the status to "stopped".
+        this.tasks = []; // Clear the task queue.
     }
 
+    // Method to pause the queue.
     pause() {
-        this.status = "paused"; // Change the state to "paused"
+        this.status = "paused"; // Set the status to "paused".
     }
 
-    async add(task) {
-        this.tasks.push(task); // Add a new task to the queue
-        await this.loop(); // Wait for the current loop to complete before adding more tasks
+    // Method to add a new task to the queue.
+    async add(task, onresolve, onreject, priority,) {
+        // Create an object that includes the task function, onresolve, onreject, and a randomly generated priority.
+        const taskObject = { task, onresolve, onreject, priority };
+        this.tasks.push(taskObject); // Add the task to the task queue.
+        await this.loop(); // Start processing the task queue.
     }
 
+    // Method to handle the completion of all tasks.
+    onFinish() {
+        console.log("All tasks are completed");
+    }
+
+    // Method to process tasks from the queue.
     async loop() {
         if (this.status === "running" && this.runningThreads < this.maxRunningThreads) {
-            const task = this.tasks.shift(); // Get the next task from the queue
-            if (task) {
-                this.runningThreads++; // Increment the count of running tasks
+            // Find the first task that meets the condition based on priority and a random number.
+            let taskIndex = this.tasks.findIndex(taskObj => Math.random() * 100 < taskObj.priority);
+            if (taskIndex === -1) {
+                taskIndex = this.tasks.findIndex(taskObj => Math.random() * 100 > taskObj.priority);
+            }
+
+            if (taskIndex !== -1) {
+                this.runningThreads++; // Increment the count of running threads.
+                const taskObject = this.tasks[taskIndex];
+                const { task, onresolve, onreject } = taskObject;
+
                 try {
-                    await task(); // Execute the task (it's assumed to be an asynchronous function)
+                    await task(); // Execute the task asynchronously.
+                    if (onresolve) {
+                        onresolve(() => {
+                            console.log("Run callback");
+                        });
+                    }
                 } catch (error) {
-                    console.error(error); // Log any errors that occur during task execution
+                    console.error(error);
+                    if (onreject) {
+                        onreject(error);
+                    }
                 } finally {
-                    this.runningThreads--; // Decrement the count of running tasks
-                    await this.loop(); // Start the next task in the queue
+                    this.runningThreads--; // Decrement the count of running threads.
+                    this.tasks.splice(taskIndex, 1); // Remove the completed task from the queue.
+
+                    if (this.runningThreads === 0 && this.tasks.length === 0) {
+                        this.onFinish(); // If there are no running threads and no tasks left, call onFinish.
+                    }
+                    await this.loop(); // Continue processing tasks.
                 }
             }
         }
@@ -44,11 +86,6 @@ class Queue {
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
-
-// Define an array of allowed characters for the password.
-const allowedChars = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"];
-// Calculate the length of the allowed characters array.
-const allowedCharslength = allowedChars.length;
 
 // Function to create a mask of zeros with a specified length.
 function* createMaskGenerator(length = 1) {
@@ -91,10 +128,10 @@ function generateStringfromIndex(indexArray) {
 }
 
 // Function to check if a provided password matches a predefined value with a timeout.
-async function login(password) {
+async function login(passwordTry) {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
-            if (password === "Que") {
+            if (passwordTry === password) {
                 resolve(true); // Return true if the password matches the predefined value.
             } else {
                 resolve(false); // Return false otherwise.
@@ -113,7 +150,10 @@ async function login(password) {
 
             for (const indexArray of indexesGenerator) {
                 const passwordTry = generateStringfromIndex(indexArray);
-
+                let arrayOfpasswordTry = passwordTry.split("");
+                let matched = arrayOfpasswordTry.filter( el => passwordArray.indexOf( el ) > -1 );
+                let priority = Math.floor(matched.length/passwordArray.length*100);
+                
                 // Use the Queue to manage parallel login attempts
                 const task = async () => {
                     const result = await login(passwordTry);
@@ -124,7 +164,15 @@ async function login(password) {
                 };
 
                 if (queue.status === "running") {
-                    await queue.add(task);
+
+                    await queue.add(task,
+                        (fn) => {
+                            fn();
+                        },
+                        (error) => {
+                            console.error("Task 1 rejected: " + error);
+                        },
+                        priority);
                 }
 
                 if (queue.status === "stopped") {
