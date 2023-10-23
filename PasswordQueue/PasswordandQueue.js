@@ -1,9 +1,8 @@
 // Define an array of allowed characters for the password.
 const allowedChars = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"];
-// Calculate the length of the allowed characters array.
-const allowedCharslength = allowedChars.length;
-const password = "qU";
-const passwordArray = password.split("");
+const allowedCharslength = allowedChars.length;// Calculate the length of the allowed characters array.
+let password = "";// Define the password
+
 
 
 // Define a class called Queue to manage asynchronous tasks with a limited number of running threads.
@@ -131,57 +130,62 @@ async function login(passwordTry) {
     });
 }
 
-(async () => {
+const brute = async (passwordArray, maxQueue = 3, endLength = 15) => {
 
-    const queue = new Queue(3); // Maximum number of login attempts to run in parallel
-
-    const brute = async (endLength = 15) => {
-        console.log(`Start calculation`);
-        for (let currentLength = 1; currentLength <= endLength; currentLength++) {
-            let indexesGenerator = generatePassword([...createMaskGenerator(currentLength)]);
-
-            for (const indexArray of indexesGenerator) {
-                const passwordTry = generateStringfromIndex(indexArray);
-
-                // Calculate the number of characters in the passwordTry that match the predefined password (passwordArray).
-                const matched = passwordTry.split("").filter(el => passwordArray.indexOf(el) > -1);
-                
-                // Calculate the priority based on the ratio of matched characters to the length of the predefined password.
-                const priority = Math.floor((matched.length / passwordArray.length) * 100);
-
-                // Define the task to attempt the login.
-                const task = async () => {
-                    const result = await login(passwordTry);
-                    if (result) {
-                        console.log(`Password found: ${passwordTry}`);
-                        queue.stop(); // Stop the queue when a match is found.
-                    }
-                };
-
-                if (queue.status === "running") {
-                    // Add the task to the queue with a priority function based on the matching characters.
-                    await queue.add(
-                        task,
-                        (fn) => {
-                            fn();
-                        },
-                        (error) => {
-                            console.error("Task rejected: " + error);
-                        },
-                        priority
-                    );
-                }
-
-                if (queue.status === "stopped") {
-                    return; // If the queue is stopped, exit the brute-force search.
-                }
-            }
-        }
-
-        console.log("Unable to find");
-    };
-
+    const queue = new Queue(maxQueue); // Maximum number of login attempts to run in parallel
     queue.run(); // Start processing login attempts
 
-    await brute();
-})();
+    console.log(`Start calculation`);
+
+    for (let currentLength = 1; currentLength <= endLength; currentLength++) {
+        let indexesGenerator = generatePassword([...createMaskGenerator(currentLength)]);
+
+        for (const indexArray of indexesGenerator) {
+            const passwordTry = generateStringfromIndex(indexArray);
+
+            // Calculate the number of characters in the passwordTry that match the predefined password (passwordArray).
+            const matched = passwordTry.split("").filter(el => passwordArray.indexOf(el) > -1);
+            
+            // Calculate the priority based on the ratio of matched characters to the length of the predefined password.
+            const priority = Math.floor((matched.length / passwordArray.length) * 100);
+
+            // Define the task to attempt the login.
+            const task = async () => {
+                const result = await login(passwordTry);
+                if (result) {
+                    console.log(`Password found: ${passwordTry}`);
+                    queue.stop(); // Stop the queue when a match is found.
+                }
+            };
+
+            if (queue.status === "running") {
+                // Add the task to the queue with a priority function based on the matching characters.
+                await queue.add(
+                    task,
+                    (fn) => {
+                        fn();
+                    },
+                    (error) => {
+                        console.error("Task rejected: " + error);
+                    },
+                    priority
+                );
+            }
+
+            if (queue.status === "stopped") {
+                return; // If the queue is stopped, exit the brute-force search.
+            }
+        }
+    }
+
+    console.log("Unable to find");
+};
+
+async function findPassword(){
+    password = "Qt"
+    const passwordArray = password.split("");
+
+    await brute(passwordArray, 4);
+}
+
+findPassword();
