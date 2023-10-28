@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Jack</title>
+    <link rel="stylesheet" type="text/css" href="window.css">
+    <script async type="module" src="front.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="left">
+            <div class="cell-row">
+                <div class="cell">
+                    <p class="player-name">Player 1</p>
+                    <div class="images" id="Player0">
+
+                    </div>
+                </div>
+                <div class="cell">
+                    <p class="player-name">Player 2</p>
+                    <div class="images" id="Player1">
+
+                    </div>
+                </div>
+            </div>
+            <div class="cell-row">
+                <div class="cell">
+                    <p class="player-name">Player 3</p>
+                    <div class="images" id="Player2">
+
+                    </div>
+                </div>
+                <div class="cell">
+                    <p class="player-name">Player 4</p>
+                    <div class="images" id="Player3">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="right">
+            <p class="player-name" id="winPlayer"></p>
+            <p class="player-name" id="CurrentPlayer">Now it's player 1 turn</p>
+            <div class="buttons" id="3">
+                <button id="addCard">Add Card</button>
+                <button id="skipTurn">Skip Turn</button>
+                <button id="Restart">Restart game</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
