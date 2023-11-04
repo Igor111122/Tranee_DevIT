@@ -24,7 +24,9 @@ body {
 }
 
 .aliens {
+    position: absolute;
     margin-top: 1%;
+    left: 40%;
 }
 
 .alien0 {
