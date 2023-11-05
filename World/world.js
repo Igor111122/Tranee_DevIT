@@ -1,22 +1,87 @@
 const { generateSurname, generateName } = require('./generateData');
 
+class Catastrophe{
+    constructor(){
+        this.howMuchwasDead;
+    }
+
+    catastropheTanos(humanArr){
+        humanArr.forEach((elem)=>{
+            if (Math.floor(Math.random() * 2) == 1){ // kill half the world
+                let index = humanArr.indexOf(elem); // remove from the list of people
+                humanArr.splice(index, 1);
+                this.howMuchwasDead++;
+            }
+        })
+        return humanArr;
+    }
+
+    catastropheMouse(humanArr, startNumberofHumans){
+        humanArr.forEach((elem)=>{
+            if (Math.floor(Math.random() * (startNumberofHumans*0.7)) == 0){ // the more people there were at the start, the lower the mortality rate
+                let index = humanArr.indexOf(elem); // remove from the list of people
+                humanArr.splice(index, 1);
+                this.howMuchwasDead++;
+            }
+        })
+        return humanArr;
+    }
+}
+
 
 class Humans{
-    constructor(name,surname,sex,hairColor,eyesColor, height, weight){
+
+    constructor(name,surname,hairColor,eyesColor,sex){
         this.name = name;
         this.surname = surname;
-        this.sex = sex;
+        if(sex==undefined){
+            if(Math.floor(Math.random() * 2) == 1){this.sex="male"} else{this.sex="female"}// random gender
+        }else{
+            this.sex = sex;// if start gender is defined
+        }
         this.age = 0;
-        this.weight = weight;
-        this.height = height;
-        this.hairColor = hairColor;
-        this.eyesColor = eyesColor;
+        this.weight = Math.floor(Math.random() * 5); // random initial weight
+        this.height = Math.floor(Math.random() * 50); // random initial height
+        if(hairColor==undefined && eyesColor == undefined){
+            let hairColor = Math.floor(Math.random() * 4); // random hair color
+            if(hairColor==1){this.hairColor="brown"} if(hairColor==2){this.hairColor="red"}if(hairColor==3){this.hairColor="dark"} if(hairColor==0){this.hairColor="blond"}
+
+            let eyesColor = Math.floor(Math.random() * 4); // random eye color
+            if(eyesColor==1){this.eyesColor="green"} if(eyesColor==2){this.eyesColor="blue"}if(eyesColor==3){this.eyesColor="hazel"} if(eyesColor==0){this.eyesColor="brown"}
+        }else{
+            this.hairColor = hairColor;
+            this.eyesColor = eyesColor;
+        }
+
         this.married = false;
+    }
+
+    growUp(){
+        if(this.sex=="male"){// increase in height and weight
+            this.height += Math.floor(Math.random() * 20);
+            this.weight += Math.floor(Math.random() * 11);
+        }else{
+            this.height += Math.floor(Math.random() * 15);
+            this.weight += Math.floor(Math.random() * 9);
+        }
+    }
+
+    giveBirth(hairColor, eyesColor) {
+        const child = new Humans(generateName(), generateSurname(), hairColor, eyesColor, undefined);
+        return child;
+    }
+
+    deleteHuman(humanArr){
+        let index = humanArr.indexOf(this); // remove from the list of people
+        humanArr.splice(index, 1);
+
+        return humanArr;
     }
 }
 
 class World{
     constructor(counterOfHuman){
+        this.catastrophe = new Catastrophe()
         this.humanArr = [];
         this.pairArr = [];
         this.timeOfDeath = 65;
@@ -28,25 +93,8 @@ class World{
             let sex="";
             if(c%2 == 0){sex="male"} else{sex="female"}
 
-            let hairColor = Math.floor(Math.random() * 4); // random hair color
-            if(hairColor==1){hairColor="brown"} if(hairColor==2){hairColor="red"}if(hairColor==3){hairColor="dark"} if(hairColor==0){hairColor="blond"}
-
-            let eyesColor = Math.floor(Math.random() * 4); // random eye color
-            if(eyesColor==1){eyesColor="green"} if(eyesColor==2){eyesColor="blue"}if(eyesColor==3){eyesColor="hazel"} if(eyesColor==0){eyesColor="brown"}
-
-            let height = Math.floor(Math.random() * 50); // random initial height
-            let weight = Math.floor(Math.random() * 5); // random starting weight
-            this.humanArr.push(new Humans(generateName(), generateSurname(), sex, hairColor, eyesColor, height, weight));
+            this.humanArr.push(new Humans(generateName(), generateSurname(), undefined, undefined, sex));
         }
-    }
-
-    makeHuman(hairColor, eyesColor){
-        let sex = Math.floor(Math.random() * 2); // random gender
-        if(sex == 1){sex="male"} else{sex="female"}
-
-        let height = Math.floor(Math.random() * 50); // random initial height
-        let weight = Math.floor(Math.random() * 5); // random initial weight
-        this.humanArr.push(new Humans(generateName(), generateSurname(), sex, hairColor, eyesColor, height, weight));
     }
 
     life(howYears) {
@@ -63,13 +111,7 @@ class World{
                 this.humanArr.forEach((human) => {
                     human.age++;// growing up
                     if(human.age<18){
-                        if(human.sex=="male"){// increase in height and weight
-                            human.height += Math.floor(Math.random() * 20);
-                            human.weight += Math.floor(Math.random() * 11);
-                        }else{
-                            human.height += Math.floor(Math.random() * 15);
-                            human.weight += Math.floor(Math.random() * 9);
-                        }
+                        human.growUp();
                     }
                     if(human.age>18 && human.age<60){
                         if(human.married == false){ // женидьба
@@ -86,33 +128,37 @@ class World{
                                 human.married = true;
                             }
                         }
-                        if(this.pairArr.length != 0){// birth
-                            for (let c = 0; c<=this.pairArr.length/2; c++){
-                                if(Math.floor(Math.random() * 25) == 0){ // chance to have a baby
-                                   this.makeHuman(this.pairArr[c][Math.floor(Math.random() * 2)].hairColor, this.pairArr[c][Math.floor(Math.random() * 2)].eyesColor);
-                                   this.howMuchwasBorn++;
-                                    if(Math.floor(Math.random() * 10) == 0){ // twins
-                                        this.makeHuman(this.pairArr[c][Math.floor(Math.random() * 2)].hairColor, this.pairArr[c][Math.floor(Math.random() * 2)].eyesColor);
-                                        this.howMuchwasBorn++;
-                                        if(Math.floor(Math.random() * 20) == 0){ // triplets
-                                            this.makeHuman(this.pairArr[c][Math.floor(Math.random() * 2)].hairColor, this.pairArr[c][Math.floor(Math.random() * 2)].eyesColor);
-                                            this.howMuchwasBorn++;
+                        if (this.pairArr.length != 0) {
+                            for (let c = 0; c <= this.pairArr.length / 2; c++) {
+                                if (Math.floor(Math.random() * 25) == 0) { // chance to have a baby
+                                    const child = this.humanArr[0].giveBirth(this.pairArr[c][Math.floor(Math.random() * 2)].hairColor,
+                                    this.pairArr[c][Math.floor(Math.random() * 2)].eyesColor);//generate random hair and color deppends fom parents
+                                    this.humanArr.push(child);// add child to population
+                                    this.howMuchwasBorn++;// for statistics
+                                    if (Math.floor(Math.random() * 10) == 0) { // twins
+                                        const child2 = this.humanArr[0].giveBirth(this.pairArr[c][Math.floor(Math.random() * 2)].hairColor, 
+                                        this.pairArr[c][Math.floor(Math.random() * 2)].eyesColor);//generate random hair and color deppends fom parents
+                                        this.humanArr.push(child2);// add child to population
+                                        this.howMuchwasBorn++;// for statistics
+                                        if (Math.floor(Math.random() * 20) == 0) { // triplets
+                                            const child3 = this.humanArr[0].giveBirth(this.pairArr[c][Math.floor(Math.random() * 2)].hairColor, 
+                                            this.pairArr[c][Math.floor(Math.random() * 2)].eyesColor);//generate random hair and color deppends fom parents
+                                            this.humanArr.push(child3);// add child to population
+                                            this.howMuchwasBorn++;// for statistics
                                         }
-                                    } 
+                                    }
                                 }
                             }
-                            
                         }
                     }
                     if (human.age>this.timeOfDeath){ // the person died
                         if(Math.random() < (human.age-this.timeOfDeath)/100){ // Every year the chance of death increases
-                            let index = this.humanArr.indexOf(human); // remove from the list of people
-                            this.humanArr.splice(index, 1);
+                            this.humanArr = human.deleteHuman(this.humanArr);
                             
                             if(human.married == true){
-                            index = this.pairArr.indexOf(human);// remove from marriage list
-                            this.pairArr.splice(index, 1);
+                                this.pairArr = human.deleteHuman(this.pairArr);
                             }
+
                             this.howMuchwasDead++;
                             //console.log(`${human.name} ${human.surname} dead at ${this.year} year it was ${human.age} years old`);
                         }
@@ -123,12 +169,14 @@ class World{
                     switch (catastrophe) {
                         case 0: // peaceful mouse want to play
                             console.log("!!!!!Peaceful mouse want to play");
-                            this.catastropheMouse();
+                            this.humanArr = this.catastrophe.catastropheMouse(this.humanArr, this.startNumberofHumans);
+                            this.howMuchwasDead += this.catastrophe.howMuchwasDead;
                             break;
                         case 1: // tanos snap
                             if(this.humanArr.length > 20){
                                 console.log("!!!!!Tanos snap");
-                                this.catastropheTanos();
+                                this.humanArr = this.catastrophe.catastropheTanos(this.humanArr);
+                                this.howMuchwasDead += this.catastrophe.howMuchwasDead;
                             }else{
                                 console.log("!!!!!You are lucky Tanos didn't snap");
                             }
@@ -151,25 +199,6 @@ class World{
         }, 10);
     }
 
-    catastropheTanos(){
-        this.humanArr.forEach((elem)=>{
-            if (Math.floor(Math.random() * 2) == 1){ // kill half the world
-                let index = this.humanArr.indexOf(elem); // remove from the list of people
-                this.humanArr.splice(index, 1);
-                this.howMuchwasDead++;
-            }
-        })
-    }
-
-    catastropheMouse(){
-        this.humanArr.forEach((elem)=>{
-            if (Math.floor(Math.random() * (this.startNumberofHumans*0.7)) == 0){ // the more people there were at the start, the lower the mortality rate
-                let index = this.humanArr.indexOf(elem); // remove from the list of people
-                this.humanArr.splice(index, 1);
-                this.howMuchwasDead++;
-            }
-        })
-    }
 
     printStatistics(){        
         // Statistics
@@ -237,7 +266,12 @@ class World{
         console.log(`Most Popular Eyes Color: ${mostPopularEyesColor}`);
         console.log(`Born: ${this.howMuchwasBorn}`);
         console.log(`Dead: ${this.howMuchwasDead}`);
+        console.log(`Dead from catastrophe: ${this.catastrophe.howMuchwasDead}`);
         console.log(`--------------------------------------------------------------------------------`);
+        this.howMuchwasDead = 0;
+        this.howMuchwasBorn = 0;
+        this.catastrophe.howMuchwasDead = 0;
+        //console.log(this.humanArr);
     }
 }
 
