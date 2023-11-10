@@ -13,7 +13,7 @@ class Front {
 
     // Method to distribute starting cards to players.
     giveStartCards() {
-        this.game.make2CardsforGamers();
+        this.game.take2CardsforGamers();
         for (let c = 0; c < 4; c++) {
             this.game.gamers[c].forEach((card) => {
                 let div = document.getElementById("Player" + c);
@@ -50,16 +50,16 @@ class Front {
             this.player = -1;
             document.querySelector('#skipTurn').disabled = true;
             document.querySelector('#addCard').disabled = true;
-            document.getElementById("CurrentPlayer").textContent = `Game over`;
+            document.getElementById("currentPlayer").textContent = `Game over`;
         } else {
             this.player++;
-            document.getElementById("CurrentPlayer").textContent = `Now it's player ${this.player + 1} turn`;
+            document.getElementById("currentPlayer").textContent = `Now it's player ${this.player + 1} turn`;
         }
     }
 
     // Method to add a card to the current player's hand.
     addCard() {
-        let card = this.game.make1CardforGamer(this.player);
+        let card = this.game.take1CardforGamer(this.player);
         let div = document.getElementById("Player" + this.player);
         let img = document.createElement("img");
         img.src = 'Carts/' + card.value + '_' + card.suit + '.png';
@@ -70,10 +70,10 @@ class Front {
             this.player = -1;
             document.querySelector('#skipTurn').disabled = true;
             document.querySelector('#addCard').disabled = true;
-            document.getElementById("CurrentPlayer").textContent = `Game over`;
+            document.getElementById("currentPlayer").textContent = `Game over`;
         } else {
             this.player++;
-            document.getElementById("CurrentPlayer").textContent = `Now it's player ${this.player + 1} turn`;
+            document.getElementById("currentPlayer").textContent = `Now it's player ${this.player + 1} turn`;
         }
     }
 }
