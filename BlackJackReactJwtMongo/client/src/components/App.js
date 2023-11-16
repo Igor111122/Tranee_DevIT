@@ -48,19 +48,30 @@ function App() {
   }, []);
 
   function next (){
-    fetch(`http://localhost:5000/nextPlayer/${localStorage.getItem('gameToken')}`);
-    window.location.reload();
+    fetch(`http://localhost:5000/nextPlayer/${localStorage.getItem('gameToken')}`)
+      .then(() => {window.location.reload(); })
+      .catch(error => {
+        console.error('Ошибка при получении про победителя:', error);
+      });
+    
   }
 
   function add (){
-    fetch(`http://localhost:5000/addCard/${localStorage.getItem('gameToken')}`);
-    next();
-    window.location.reload();
+    fetch(`http://localhost:5000/addCard/${localStorage.getItem('gameToken')}`)
+      .then(() => {next();
+        window.location.reload(); })
+      .catch(error => {
+        console.error('Ошибка при получении про победителя:', error);
+      });
+    
   }
 
   function restart(){
-    fetch(`http://localhost:5000/restart/${localStorage.getItem('gameToken')}`);
-    window.location.reload();
+    fetch(`http://localhost:5000/restart/${localStorage.getItem('gameToken')}`)
+    .then(() => {window.location.reload(); })
+      .catch(error => {
+        console.error('Ошибка при получении про победителя:', error);
+      });
   };
 
   return (
