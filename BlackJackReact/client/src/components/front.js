@@ -18,7 +18,7 @@ export default class Front extends Component {
     displayCards(playerNumber) {
         const playerCards = this.game.gamers[playerNumber];
 
-        return playerCards.map((card, index) => (
+        return playerCards.map((card, index) => (//добавить компонент 
             <img
                 key={index}
                 src={`${card.value}_${card.suit}.png`}
@@ -30,7 +30,7 @@ export default class Front extends Component {
 
     // Method to check the winner of the game.
     checkWinner() {
-        this.tempWinner = this.game.returnWinner();
+        this.tempWinner = this.game.returnWinner();//переписать под апп и выводить только победителей
         if (this.tempWinner.length > 1) {
             let winnersText = this.tempWinner.map(winnerIndex => `Player ${winnerIndex + 1}`).join(' and ');
             this.winner = this.tempWinner;

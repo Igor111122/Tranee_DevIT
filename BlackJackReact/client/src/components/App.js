@@ -1,42 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import css from '../window.css';
 import Front from './front';
-import image from './1.png';
+import Game from './back.js';
 function App() {
+  let player = 0;
   const [front, setFront] = useState(new Front());
-/*
-  const [html, setHtml] = useState('');
-  let i = 10;
-  useEffect(() => {
-    // Получите HTML с сервера Express
-    fetch('http://localhost:5000/getHtml')
-      .then((response) => response.text())
-      .then((data) => setHtml(data));
-  }, []);
+  const [game, setGame] = useState(new Game());
+  const [winnersText, setWinnerstext] = useState('');
+  const [nextPlayerturn, setNextPlayerturn] = useState('Now it player 1 turn');
 
-  let htmlString= ""
-  let front = new Front();
-  if(html){
-    htmlString = front.giveStartCards(html);
+  useEffect(() => {checkWinner(); });
+
+  function checkWinner() {
+    const tempWinner = game.returnWinner();//переписать под апп и выводить только победителей
+    console.log(game.returnWinner());
+    if (tempWinner.length > 1) {
+        let winnersText = tempWinner.map(winnerIndex => `Player ${winnerIndex + 1}`).join(' and ');
+        return(setWinnerstext(`${winnersText} win`));
+    } else if (tempWinner.length === 1) {
+        return( setWinnerstext(`Player ${this.tempWinner[0] + 1} win`));
+    } else {
+        // Handle the situation when there are no winners.
+        // This may include displaying a tie message or taking other actions.
+    }
   }
 
-let insertString = "<p>Player4234234</p>";
-
-// Находим позицию, после которой нужно вставить новую строку
-let position = htmlString.indexOf(">Player 4</p>");
-
-// Разбиваем строку на две части и вставляем новую строку
-let modifiedString = htmlString.slice(0, position + 1) + insertString + htmlString.slice(position + 1);
-*/
-  
-let [nextPlayerturn , setNextPlayerturn] = useState('Now it player 1 turn');
   function next (){
-    setNextPlayerturn(()=>front.nextPlayer());
+    if (player == 3) {
+      checkWinner();
+      player = -1;
+      setNextPlayerturn('Game Over');
+    } else {
+        player++;
+        setNextPlayerturn(`Now it's player ${player + 1} turn`);
+    }
   }
 
   function add (){
-    front.addCard();
-    setNextPlayerturn(()=>front.nextPlayer());
+    game.take1CardforGamer(player);
+    checkWinner();
+    next();
   }
 
   return (
@@ -72,10 +75,10 @@ let [nextPlayerturn , setNextPlayerturn] = useState('Now it player 1 turn');
             </div>
         </div>
         <div class="right">
-            {front.checkWinner()}
+        <p class="player-name">{`${winnersText}`}</p>
             <p class="player-name" id="currentPlayer">{nextPlayerturn}</p>
                 <div class="buttons" id="3">
-                    <button id="addCard"onClick={() => {
+                    <button id="addCard" onClick={() => {
                       if(nextPlayerturn!= 'Game Over'){add()}}
                       }>Add Card</button>
                     <button id="skipTurn" onClick={() => {
