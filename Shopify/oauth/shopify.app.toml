@@ -1,0 +1,28 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "oauth"
+client_id = "0d0e7dcd78f56a8908e36c01f6305f6d"
+application_url = "https://southampton-pizza-df-section.trycloudflare.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products, read_product_listings"
+
+[auth]
+redirect_urls = [
+  "https://southampton-pizza-df-section.trycloudflare.com/auth/callback",
+  "https://southampton-pizza-df-section.trycloudflare.com/auth/shopify/callback",
+  "https://southampton-pizza-df-section.trycloudflare.com/api/auth/callback",
+  "https://southampton-pizza-df-section.trycloudflare.com/.shopify/graphiql/auth/callback"
+]
+
+[webhooks]
+api_version = "2023-10"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "teststore3222.myshopify.com"
