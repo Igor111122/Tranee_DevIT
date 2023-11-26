@@ -59,6 +59,7 @@ body {
 
 
 .alianBullet {
+    display: none;
     position: absolute;
     width: 5px;
     height: 20px;

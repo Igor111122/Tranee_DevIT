@@ -154,36 +154,3 @@ let lives = 3;
 let game = new Game();
 game.startGame();
 
-/*
-let elien = new ElienBoss();
-let player = new Player();
-let barrer = new Barrier();
-
-elien.createEliens();
-
-barrer.createBarriers();
-
-player.addListenergoLeftRight(20);
-
-player.addListenerShoot();
-
-setInterval(() => {
-
-    player.pushBullet();
-
-    elien.goEliens();
-
-    barrer.checkCollision();
-
-    if(player.checkCollision() == 1){
-        alert("You won!");
-    }
-
-
-    if(elien.checkCollision() == 0){
-        alert("Game over");
-    }
-    
-
-}, 10);
-*/

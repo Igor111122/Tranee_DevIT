@@ -129,18 +129,8 @@ class Barrier extends Elien5Level{
     }
 
     createBarriers(){
+        this.createGameobj(1, 4, 'barrier', '100px', '50px', "url('Pictures/Barrier.webp')", "contain")
         for (let col = 1; col < 4; col++) {
-            const barrer = document.createElement('div');
-            barrer.className = 'barrier';
-            barrer.style.position = 'absolute';
-            barrer.style.width = '100px';
-            barrer.style.height = '50px';
-            barrer.style.backgroundImage = "url('Pictures/Barrier.webp')";
-            barrer.style.backgroundSize = "contain";
-            barrer.id = `barrier-${col}`;;
-            barrer.style.top = 70 + '%';
-            barrer.style.left = col * 24 + '%';
-            this.gameContainer.appendChild(barrer);
             this.barrierHits[`barrier-${col}`] = 0; // Инициализируем счетчик попаданий для каждого барьера
         }
     }
@@ -157,11 +147,7 @@ class Barrier extends Elien5Level{
                 alianBulletRect.bottom > barrierRect.top &&
                 alianBulletRect.top < barrierRect.bottom
             ) {
-                /*
-                this.gameContainer.removeChild(barrier);
-                barriers.splice(index, 1);
-                this.teleportBullet();
-                */  
+
                 const barrierId = barrier.id;
                 this.barrierHits[barrierId]++; // Увеличиваем счетчик попаданий для данного барьера
                 if (this.barrierHits[barrierId] >= 4) {

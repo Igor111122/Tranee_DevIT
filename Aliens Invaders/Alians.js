@@ -1,31 +1,51 @@
-class Elien1and2Level {
-    constructor(elienLives = 0){
+class Enemy{
+    constructor(){
         this.aliensContainer = document.getElementById('aliens');
+        this.gameContainer = document.getElementById('game-container');
+    }
+    createGameobj(numRow, numCol, className, width, height, backgroundImage, backgroundSize, elienLives=0, id='' ){
+        let counterArr = 0;
+        for (let row = 0; row < numRow; row++) {
+            for (let col = 0; col < numCol; col++) {
+                const obj = document.createElement('div');
+                obj.style.position = 'absolute';
+                obj.style.width = width;
+                obj.style.height = height;
+                obj.style.backgroundImage = backgroundImage;
+                obj.style.backgroundSize = backgroundSize;
+        
+                if(className != 'barrier'){//для создание пришельца
+                    obj.className = 'alien'+(counterArr);
+                    counterArr++;
+                    if(counterArr==9){counterArr=0}
+                    obj.style.top = row * 60 + 'px';
+                    obj.style.left = col * 60 + 'px';
+                    obj.id = id;
+                    obj.value = elienLives;
+                    this.aliensContainer.appendChild(obj);
+                }else{//для создания барьера
+                    if(col==0){col++}
+                    obj.className = 'barrier';
+                    obj.id = `barrier-${col}`;
+                    obj.style.top = 70 + '%';
+                    obj.style.left = col * 24 + '%';
+                    this.gameContainer.appendChild(obj);
+                }
+                
+            }
+        }
+    }
+}
+
+class Elien1and2Level extends Enemy {
+    constructor(elienLives = 0){
+        super();
         this.numCol = 5;
         this.elienLives = elienLives;
     }
 
     createEliens(numRow = 2){
-        let counterArr =0;
-        for (let row = 0; row < numRow; row++) {
-            for (let col = 0; col < this.numCol; col++) {
-                const alien = document.createElement('div');
-                alien.className = 'alien'+(counterArr);
-                counterArr++;
-                if(counterArr==9){counterArr=0}
-                alien.style.position = 'absolute';
-                alien.style.width = '50px';
-                alien.style.height = '50px';
-                alien.style.backgroundImage = "url('Pictures/Aliens.png')";
-                alien.style.backgroundSize = "160px 200px";
-                alien.id = "alien";
-                alien.value = this.elienLives;
-                alien.style.top = row * 60 + 'px';
-                alien.style.left = col * 60 + 'px';
-                this.aliensContainer.appendChild(alien);
-            }
-        }
-        
+        this.createGameobj(numRow,this.numCol, 'alien', '50px', '50px', "url('Pictures/Aliens.png')", "160px 200px", this.elienLives, "alien")
     }
 }
 
@@ -37,7 +57,6 @@ class Elien3and4Level extends Elien1and2Level {
         this.aliensGoright = false;
         this.body = document.getElementById('body');
         this.alianBullet = document.getElementById('alianBullet');
-        this.gameContainer = document.getElementById('game-container');
         this.aliensContainer = document.getElementById('aliens');
     }
 
@@ -54,6 +73,7 @@ class Elien3and4Level extends Elien1and2Level {
 
     checkCollision(){
         this.goBullet();
+        document.getElementById('alianBullet').style.display = 'block';
         if (this.alianBullet.offsetTop > this.gameContainer.offsetHeight - 50) {
             // Проверка на столкновение с игроком
             const playerRect = document.getElementById('player').getBoundingClientRect();
