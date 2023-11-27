@@ -2,19 +2,19 @@
 
 name = "test-app-extention"
 client_id = "36459abe50fa9070ab1de7dab4be0e53"
-application_url = "https://allocation-bought-manga-receipt.trycloudflare.com"
+application_url = "https://wright-rescue-instructors-terry.trycloudflare.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "write_products,read_files,read_themes"
 
 [auth]
 redirect_urls = [
-  "https://allocation-bought-manga-receipt.trycloudflare.com/auth/callback",
-  "https://allocation-bought-manga-receipt.trycloudflare.com/auth/shopify/callback",
-  "https://allocation-bought-manga-receipt.trycloudflare.com/api/auth/callback",
-  "https://allocation-bought-manga-receipt.trycloudflare.com/.shopify/graphiql/auth/callback"
+  "https://wright-rescue-instructors-terry.trycloudflare.com/auth/callback",
+  "https://wright-rescue-instructors-terry.trycloudflare.com/auth/shopify/callback",
+  "https://wright-rescue-instructors-terry.trycloudflare.com/api/auth/callback",
+  "https://wright-rescue-instructors-terry.trycloudflare.com/.shopify/graphiql/auth/callback"
 ]
 
 [webhooks]

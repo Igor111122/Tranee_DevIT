@@ -12,6 +12,7 @@ import {
   List,
   Link,
   InlineStack,
+  
 } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 
@@ -23,44 +24,82 @@ export const loader = async ({ request }) => {
 
 export const action = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
-  const color = ["Red", "Orange", "Yellow", "Green"][
-    Math.floor(Math.random() * 4)
-  ];
+
   const response = await admin.graphql(
-    `#graphql
-      mutation populateProduct($input: ProductInput!) {
-        productCreate(input: $input) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
-                }
+    `query {
+      files(first: 250) {
+        edges {
+          node {
+            ... on MediaImage {
+              id
+              alt
+              image {
+                originalSrc: url
               }
             }
           }
         }
-      }`,
-    {
-      variables: {
-        input: {
-          title: `${color} Snowboard`,
-          variants: [{ price: Math.random() * 100 }],
-        },
-      },
-    }
+      }
+    }`,
   );
   const responseJson = await response.json();
 
+  const response2 = await admin.graphql(
+    `query {
+      currentAppInstallation {
+        id
+      }
+    }`,
+  );
+  const responseJson2 = await response2.json();
+
+  const response3 = await admin.graphql({
+    data: {
+      "query": `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields {
+            key
+            namespace
+            value
+            createdAt
+            updatedAt
+          }
+          userErrors {
+            field
+            message
+            code
+          }
+        }
+      }`,
+      "variables": {
+        "metafields": [
+          {
+            "key": "materials",
+            "namespace": "my_fields",
+            "ownerId": "gid://shopify/AppInstallation/663404740930",
+            "type": "multi_line_text_field",
+            "value": "95% Cotton\n5% Spandex"
+          },
+          {
+            "key": "manufactured",
+            "namespace": "my_fields",
+            "ownerId": "gid://shopify/AppInstallation/663404740930",
+            "type": "single_line_text_field",
+            "value": "Made in Canada"
+          }
+        ]
+      },
+    },
+  }
+  );
+  const responseJson3 = await response3.json();
+
+
+
   return json({
-    product: responseJson.data.productCreate.product,
+    images: responseJson.data.files.edges,
+    id: responseJson2.data.currentAppInstallation.id,
+    meta: responseJson3.data,
   });
 };
 
@@ -70,23 +109,18 @@ export default function Index() {
   const submit = useSubmit();
   const isLoading =
     ["loading", "submitting"].includes(nav.state) && nav.formMethod === "POST";
-  const productId = actionData?.product?.id.replace(
-    "gid://shopify/Product/",
-    ""
-  );
 
-  useEffect(() => {
-    if (productId) {
-      shopify.toast.show("Product created");
-    }
-  }, [productId]);
   const generateProduct = () => submit({}, { replace: true, method: "POST" });
+  
+  const handleButtonClick = (imageId) => {
+    console.log(`Selected image ID: ${imageId}`);
+  };
 
   return (
     <Page>
       <ui-title-bar title="Remix app template">
         <button variant="primary" onClick={generateProduct}>
-          Generate a product
+          Show images
         </button>
       </ui-title-bar>
       <BlockStack gap="500">
@@ -96,65 +130,32 @@ export default function Index() {
               <BlockStack gap="500">
                 <BlockStack gap="200">
                   <Text as="h2" variant="headingMd">
-                    Congrats on creating a new Shopify app 🎉
-                  </Text>
-                  <Text variant="bodyMd" as="p">
-                    This embedded app template uses{" "}
-                    <Link
-                      url="https://shopify.dev/docs/apps/tools/app-bridge"
-                      target="_blank"
-                      removeUnderline
-                    >
-                      App Bridge
-                    </Link>{" "}
-                    interface examples like an{" "}
-                    <Link url="/app/additional" removeUnderline>
-                      additional page in the app nav
-                    </Link>
-                    , as well as an{" "}
-                    <Link
-                      url="https://shopify.dev/docs/api/admin-graphql"
-                      target="_blank"
-                      removeUnderline
-                    >
-                      Admin GraphQL
-                    </Link>{" "}
-                    mutation demo, to provide a starting point for app
-                    development.
-                  </Text>
-                </BlockStack>
-                <BlockStack gap="200">
-                  <Text as="h3" variant="headingMd">
-                    Get started with products
-                  </Text>
-                  <Text as="p" variant="bodyMd">
-                    Generate a product with GraphQL and get the JSON output for
-                    that product. Learn more about the{" "}
-                    <Link
-                      url="https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate"
-                      target="_blank"
-                      removeUnderline
-                    >
-                      productCreate
-                    </Link>{" "}
-                    mutation in our API references.
+                    Select image for modal background 🎉
                   </Text>
                 </BlockStack>
                 <InlineStack gap="300">
                   <Button loading={isLoading} onClick={generateProduct}>
-                    Generate a product
+                    Show images
                   </Button>
-                  {actionData?.product && (
-                    <Button
-                      url={`shopify:admin/products/${productId}`}
-                      target="_blank"
-                      variant="plain"
-                    >
-                      View product
-                    </Button>
-                  )}
                 </InlineStack>
-                {actionData?.product && (
+                {actionData?.images && (
+                  <Page title="Image Gallery">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                      {actionData.images.map((image) => (
+                        <Card key={image.node.id} style={{ width: '300px', margin: '16px' }}>
+                          <img
+                            src={image.node.image.originalSrc}
+                            alt={image.node.alt}
+                            style={{ maxWidth: '100%', height: 'auto' }}
+                          />
+                            <Text variation="subdued">{image.node.alt}</Text>
+                            <Button onClick={() => console.log(image.node.image.originalSrc)}> Select Image </Button>
+                        </Card>
+                      ))}
+                      </div>
+                  </Page>
+                )}
+                {actionData?.id && (
                   <Box
                     padding="400"
                     background="bg-surface-active"
@@ -164,114 +165,26 @@ export default function Index() {
                     overflowX="scroll"
                   >
                     <pre style={{ margin: 0 }}>
-                      <code>{JSON.stringify(actionData.product, null, 2)}</code>
+                      <code>{JSON.stringify(actionData.id, null, 2)}</code>
+                    </pre>
+                  </Box>
+                )}
+                {actionData?.meta && (
+                  <Box
+                    padding="400"
+                    background="bg-surface-active"
+                    borderWidth="025"
+                    borderRadius="200"
+                    borderColor="border"
+                    overflowX="scroll"
+                  >
+                    <pre style={{ margin: 0 }}>
+                      <code>{JSON.stringify(actionData.meta, null, 2)}</code>
                     </pre>
                   </Box>
                 )}
               </BlockStack>
             </Card>
-          </Layout.Section>
-          <Layout.Section variant="oneThird">
-            <BlockStack gap="500">
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">
-                    App template specs
-                  </Text>
-                  <BlockStack gap="200">
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        Framework
-                      </Text>
-                      <Link
-                        url="https://remix.run"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        Remix
-                      </Link>
-                    </InlineStack>
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        Database
-                      </Text>
-                      <Link
-                        url="https://www.prisma.io/"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        Prisma
-                      </Link>
-                    </InlineStack>
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        Interface
-                      </Text>
-                      <span>
-                        <Link
-                          url="https://polaris.shopify.com"
-                          target="_blank"
-                          removeUnderline
-                        >
-                          Polaris
-                        </Link>
-                        {", "}
-                        <Link
-                          url="https://shopify.dev/docs/apps/tools/app-bridge"
-                          target="_blank"
-                          removeUnderline
-                        >
-                          App Bridge
-                        </Link>
-                      </span>
-                    </InlineStack>
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        API
-                      </Text>
-                      <Link
-                        url="https://shopify.dev/docs/api/admin-graphql"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        GraphQL API
-                      </Link>
-                    </InlineStack>
-                  </BlockStack>
-                </BlockStack>
-              </Card>
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">
-                    Next steps
-                  </Text>
-                  <List>
-                    <List.Item>
-                      Build an{" "}
-                      <Link
-                        url="https://shopify.dev/docs/apps/getting-started/build-app-example"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        {" "}
-                        example app
-                      </Link>{" "}
-                      to get started
-                    </List.Item>
-                    <List.Item>
-                      Explore Shopify’s API with{" "}
-                      <Link
-                        url="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        GraphiQL
-                      </Link>
-                    </List.Item>
-                  </List>
-                </BlockStack>
-              </Card>
-            </BlockStack>
           </Layout.Section>
         </Layout>
       </BlockStack>
