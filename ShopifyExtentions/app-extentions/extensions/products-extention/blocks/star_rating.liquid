@@ -1,10 +1,11 @@
+{% assign selectedPicture = app.metafields.products_images.images %}
+
 {% if template == 'index' %}
 <div id="myModal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="document.getElementById('myModal').style.display='none'">&times;</span>
     <h2 style="margin-left: 44%; color:{{ block.settings.colour }};">Happy New Year!</h2>
     <p style="margin-left: 38%; color:{{ block.settings.colour }};">We wish you happiness and success in the new year!</p>
-
     <a href="/collections/all" class="button">Show products</a>
   </div>
 </div>
@@ -26,7 +27,7 @@
   }
 
   .modal-content {
-    background-image: url("https://cdn.shopify.com/s/files/1/0846/8047/4946/files/New_Year_Night_White.jpg?v=1700997797");
+    background-image: url({{selectedPicture}});
     background-size: cover;
     background-color: #fefefe;
     margin: 5% auto;

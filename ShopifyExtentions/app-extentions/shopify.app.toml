@@ -2,7 +2,7 @@
 
 name = "test-app-extention"
 client_id = "36459abe50fa9070ab1de7dab4be0e53"
-application_url = "https://wright-rescue-instructors-terry.trycloudflare.com"
+application_url = "https://yacht-drums-deposit-cook.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,10 +11,10 @@ scopes = "write_products,read_files,read_themes"
 
 [auth]
 redirect_urls = [
-  "https://wright-rescue-instructors-terry.trycloudflare.com/auth/callback",
-  "https://wright-rescue-instructors-terry.trycloudflare.com/auth/shopify/callback",
-  "https://wright-rescue-instructors-terry.trycloudflare.com/api/auth/callback",
-  "https://wright-rescue-instructors-terry.trycloudflare.com/.shopify/graphiql/auth/callback"
+  "https://yacht-drums-deposit-cook.trycloudflare.com/auth/callback",
+  "https://yacht-drums-deposit-cook.trycloudflare.com/auth/shopify/callback",
+  "https://yacht-drums-deposit-cook.trycloudflare.com/api/auth/callback",
+  "https://yacht-drums-deposit-cook.trycloudflare.com/.shopify/graphiql/auth/callback"
 ]
 
 [webhooks]

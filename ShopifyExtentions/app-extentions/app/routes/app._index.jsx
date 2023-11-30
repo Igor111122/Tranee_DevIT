@@ -1,20 +1,9 @@
-import { useEffect } from "react";
+import { useCallback, useState } from "react";
 import { json } from "@remix-run/node";
 import { useActionData, useNavigation, useSubmit } from "@remix-run/react";
-import {
-  Page,
-  Layout,
-  Text,
-  Card,
-  Button,
-  BlockStack,
-  Box,
-  List,
-  Link,
-  InlineStack,
-  
-} from "@shopify/polaris";
+import {Page, Layout, Text, Card, Button, BlockStack, Box, InlineStack, Modal, TextContainer} from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
+
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
@@ -25,7 +14,7 @@ export const loader = async ({ request }) => {
 export const action = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
 
-  const response = await admin.graphql(
+  const responseImages = await admin.graphql(
     `query {
       files(first: 250) {
         edges {
@@ -42,65 +31,61 @@ export const action = async ({ request }) => {
       }
     }`,
   );
-  const responseJson = await response.json();
+  const responseImagesJson = await responseImages.json();
+  const body = await request.formData();//get data from request
 
-  const response2 = await admin.graphql(
-    `query {
-      currentAppInstallation {
-        id
-      }
-    }`,
-  );
-  const responseJson2 = await response2.json();
+  if(body.get("selectedImage")){
 
-  const response3 = await admin.graphql({
-    data: {
-      "query": `mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
-        metafieldsSet(metafields: $metafields) {
-          metafields {
-            key
-            namespace
-            value
-            createdAt
-            updatedAt
-          }
-          userErrors {
-            field
-            message
-            code
-          }
+    const responseId = await admin.graphql(
+      `query {
+        currentAppInstallation {
+          id
         }
       }`,
-      "variables": {
-        "metafields": [
-          {
-            "key": "materials",
-            "namespace": "my_fields",
-            "ownerId": "gid://shopify/AppInstallation/663404740930",
-            "type": "multi_line_text_field",
-            "value": "95% Cotton\n5% Spandex"
+    );
+    const responseIdJson = await responseId.json();
+
+    const responseSetMeta = await admin.graphql(
+      `mutation CreateAppDataMetafield($metafieldsSetInput: [MetafieldsSetInput!]!) {
+      metafieldsSet(metafields: $metafieldsSetInput) {
+        metafields {
+          id
+          namespace
+          key 
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }`
+        ,
+        {
+          variables: {
+            metafieldsSetInput: [
+              {
+                namespace: "products_images",
+                key: "images",
+                type: "single_line_text_field",
+                value: body.get("selectedImage"),
+                ownerId: responseIdJson.data.currentAppInstallation.id,//set app instalation id
+              },
+            ],
           },
-          {
-            "key": "manufactured",
-            "namespace": "my_fields",
-            "ownerId": "gid://shopify/AppInstallation/663404740930",
-            "type": "single_line_text_field",
-            "value": "Made in Canada"
-          }
-        ]
-      },
-    },
+        });
+    const responseSetMetaJson = await responseSetMeta.json();
+
+
+    return json({
+      images: responseImagesJson.data.files.edges,
+      meta: responseSetMetaJson.data,
+    });
+  }else{
+    return json({
+      images: responseImagesJson.data.files.edges,
+    });
   }
-  );
-  const responseJson3 = await response3.json();
-
-
-
-  return json({
-    images: responseJson.data.files.edges,
-    id: responseJson2.data.currentAppInstallation.id,
-    meta: responseJson3.data,
-  });
+    
 };
 
 export default function Index() {
@@ -112,16 +97,22 @@ export default function Index() {
 
   const generateProduct = () => submit({}, { replace: true, method: "POST" });
   
-  const handleButtonClick = (imageId) => {
+  const handleButtonClick = (imageId) => {//need to on click elect Image and set metafield
     console.log(`Selected image ID: ${imageId}`);
+    submit({selectedImage: imageId}, { replace: true, method: "POST" });
   };
+
+  const [active, setActive] = useState(true);
+
+  const handleChange = useCallback(() => setActive(!active), [active]);
 
   return (
     <Page>
-      <ui-title-bar title="Remix app template">
+      <ui-title-bar title="App change modal image">
         <button variant="primary" onClick={generateProduct}>
           Show images
         </button>
+
       </ui-title-bar>
       <BlockStack gap="500">
         <Layout>
@@ -129,14 +120,10 @@ export default function Index() {
             <Card>
               <BlockStack gap="500">
                 <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">
-                    Select image for modal background 🎉
-                  </Text>
+                  <Text as="h2" variant="headingMd"> Select image for modal background 🎉 </Text>
                 </BlockStack>
                 <InlineStack gap="300">
-                  <Button loading={isLoading} onClick={generateProduct}>
-                    Show images
-                  </Button>
+                  <Button loading={isLoading} onClick={generateProduct}> Show images </Button>
                 </InlineStack>
                 {actionData?.images && (
                   <Page title="Image Gallery">
@@ -149,39 +136,41 @@ export default function Index() {
                             style={{ maxWidth: '100%', height: 'auto' }}
                           />
                             <Text variation="subdued">{image.node.alt}</Text>
-                            <Button onClick={() => console.log(image.node.image.originalSrc)}> Select Image </Button>
+                            <Button onClick={() => handleButtonClick(image.node.image.originalSrc)}> Select Image </Button>
                         </Card>
                       ))}
                       </div>
                   </Page>
                 )}
-                {actionData?.id && (
-                  <Box
-                    padding="400"
-                    background="bg-surface-active"
-                    borderWidth="025"
-                    borderRadius="200"
-                    borderColor="border"
-                    overflowX="scroll"
+                {actionData?.meta?.metafieldsSet?.userErrors[0]?.message && (
+                  <Modal
+                    open={active}
+                    onClose={handleChange}
+                    title="Error"
                   >
-                    <pre style={{ margin: 0 }}>
-                      <code>{JSON.stringify(actionData.id, null, 2)}</code>
-                    </pre>
-                  </Box>
+                    <Modal.Section>
+                      <TextContainer>
+                        <p>
+                          {actionData.meta.metafieldsSet.userErrors[0].message}
+                        </p>
+                      </TextContainer>
+                    </Modal.Section>
+                  </Modal>
                 )}
-                {actionData?.meta && (
-                  <Box
-                    padding="400"
-                    background="bg-surface-active"
-                    borderWidth="025"
-                    borderRadius="200"
-                    borderColor="border"
-                    overflowX="scroll"
+                {actionData?.meta?.metafieldsSet?.metafields[0]?.id && (
+                  <Modal
+                    open={active}
+                    onClose={handleChange}
+                    title="Image changed"
                   >
-                    <pre style={{ margin: 0 }}>
-                      <code>{JSON.stringify(actionData.meta, null, 2)}</code>
-                    </pre>
-                  </Box>
+                    <Modal.Section>
+                      <TextContainer>
+                        <p>
+                          You are sucsesfuly changed image
+                        </p>
+                      </TextContainer>
+                    </Modal.Section>
+                  </Modal>
                 )}
               </BlockStack>
             </Card>
